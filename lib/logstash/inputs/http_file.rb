@@ -38,7 +38,7 @@ def run(queue)
         sleep @interval
         retry
     end #end exception
-    files = ((response.body).to_s).scan(/<A HREF=".*?">(.*?)<\/A>/).flatten 
+    files = ((response.body).to_s).scan(/<A HREF=".*?">(.*?)<\/A>/i).flatten 
     file_position = {}
     files.each do |file|
 	@logger.info("Test pattern for file=#{file}")
