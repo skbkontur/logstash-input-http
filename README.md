@@ -15,6 +15,10 @@ input {
     	url => ... # string (required), example: "http://example.com/file.log"
         interval => ... # number (optional), default: 5, interval between get requests
         start_position => # string (optional) "beginning" or "end", default: end, position to start reading: if set to "beginning", file will be read from the beginning when logstash service starts.
+        username => # Basic Authorization username
+        password => # Basic Authorization password
+        max_request_bytes => # max request bytes default: 1048576
+        sincedb_path => # sincedb path default: $HOME/.slice_md5(url)  
     }
 }
 ```
