@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = 'logstash-input-http_file'
-  s.version         = '0.2.1'
+  s.version         = '0.2.2'
   s.licenses = ['Apache License (2.0)']
   s.summary = 'This is alpha version of tail http input.'
   s.description = 'Tail log file from http url'
@@ -10,9 +10,9 @@ Gem::Specification.new do |s|
   s.require_paths = ['lib']
 
   # Files
-  s.files = ['lib/logstash/inputs/http_file.rb']
-   # Tests
-  s.test_files = s.files.grep(%r{^(test|spec|features)/})
+  s.files = ["DEVELOPER.md", "Gemfile", "LICENSE", "README.md", "Rakefile", "lib/logstash/inputs/http_file.rb", "logstash-input-http_file.gemspec", "tests/http_file_test.rb"]
+  # Tests
+  s.test_files = ["tests/http_file_test.rb"]
 
   # Special flag to let us know this is actually a logstash plugin
   s.metadata = {'logstash_plugin' => 'true', 'logstash_group' => 'input'}
