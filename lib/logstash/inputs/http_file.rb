@@ -5,6 +5,7 @@ require "stud/interval"
 require "socket"
 require "http"
 require "base64"
+require "stringio"
 
 class LogStash::Inputs::HttpFile < LogStash::Inputs::Base
   class Interrupted < StandardError; end
@@ -69,21 +70,24 @@ class LogStash::Inputs::HttpFile < LogStash::Inputs::Base
       begin
         response = HTTP[:Authorization => "Basic #{@auth_string}"].head(@url);        
         new_file_size = response['Content-Length'].to_i
-        @logger.info("HTTP_FILE url=#{@url} last_position=#{@last_position} new_file_size=#{new_file_size}")
-        
+
         next if new_file_size == @last_position # file not modified. Skip
         @last_position = 0 if new_file_size < @last_position # file truncated => log rotation  
-        
+
+        skip_last_line = false
         delta_size = new_file_size - @last_position
         if delta_size > @max_request_bytes
             new_file_size = @last_position + @max_request_bytes
+            skip_last_line = true
         end
-        
         response = HTTP[:Range => "bytes=#{@last_position}-#{new_file_size}", :Authorization => "Basic #{@auth_string}"].get(@url)
-        
         if (200..226).to_a.include? response.code.to_i
-          messages = response.body.to_s.lstrip
+          messages = StringIO.new(response.body.to_s)
           messages.each_line do | message |
+            if skip_last_line && messages.eof?  
+               @last_position -= message.bytesize
+               break
+            end
             message = message.chomp
             if message != ''
               event = LogStash::Event.new("message" => message, "host" => @host)
