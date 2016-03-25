@@ -21,7 +21,6 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency 'logstash-core', '>= 1.4.0'
   s.add_runtime_dependency 'logstash-codec-plain', '~>1.0'
   s.add_runtime_dependency 'stud', '~> 0.0.19'
-  s.add_runtime_dependency 'concurrent-ruby', '0.9.1'
   s.add_development_dependency 'logstash-devutils'
   s.add_development_dependency 'minitest'
   s.add_development_dependency 'minitest-reporters'
