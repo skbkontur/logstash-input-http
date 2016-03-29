@@ -68,17 +68,17 @@ class LogStash::Inputs::HttpFile < LogStash::Inputs::Base
   def run(queue)    
     Stud.interval(@interval) do
       begin
+        skip_last_line = false
         response = HTTP[:Authorization => "Basic #{@auth_string}"].head(@url);        
         new_file_size = response['Content-Length'].to_i
 
         next if new_file_size == @last_position # file not modified. Skip
         @last_position = 0 if new_file_size < @last_position # file truncated => log rotation  
 
-        skip_last_line = false
         delta_size = new_file_size - @last_position
         if delta_size > @max_request_bytes
-            new_file_size = @last_position + @max_request_bytes
-            skip_last_line = true
+          new_file_size = @last_position + @max_request_bytes
+          skip_last_line = true
         end
         response = HTTP[:Range => "bytes=#{@last_position}-#{new_file_size}", :Authorization => "Basic #{@auth_string}"].get(@url)
         if (200..226).to_a.include? response.code.to_i
@@ -97,14 +97,15 @@ class LogStash::Inputs::HttpFile < LogStash::Inputs::Base
           end
           @last_position += response['Content-Length'].to_i
           File.open(@sincedb_path, File::RDWR|File::CREAT, 0644) { | f | f.write(@last_position.to_s) }
+          redo if skip_last_line
         else
           @logger.error("HTTP_FILE \"#{@url}\" return #{response.code}")
-        end 
+        end
       rescue Errno::ECONNREFUSED
         @logger.error("HTTP_FILE Error: Connection refused url=#{@url}")
         sleep @interval
         retry
-      end 
+      end
     end 
   end 
 end 
