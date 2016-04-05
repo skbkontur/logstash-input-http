@@ -18,11 +18,7 @@ class LogStash::Inputs::HttpFile < LogStash::Inputs::Base
   config :username, :validate => :string, :default => ""
   config :password, :validate => :string, :default => ""
   config :max_request_bytes, :validate => :number, :default => 1048576
-  config :sincedb_path, :validate => :string  
-
-  def initialize(*args)
-    super(*args)
-  end
+  config :sincedb_path, :validate => :string
 
   public
   def register
@@ -49,11 +45,11 @@ class LogStash::Inputs::HttpFile < LogStash::Inputs::Base
     # Get position from file
     @auth_string = ""
     if @username != ''
-      @auth_string = Base64.strict_encode64("#{@username}:#{@password}") 
+      @auth_string = Base64.strict_encode64("#{@username}:#{@password}")
     end
    
     response = HTTP[:Authorization => "Basic #{@auth_string}"].head(@url);
-    if !((200..226).to_a.include? response.code.to_i) 
+    if !((200..226).to_a.include? response.code.to_i)
       raise ArgumentError.new("HTTP_FILE \"#{@url}\" return #{response.code}")
     end
     
@@ -65,7 +61,8 @@ class LogStash::Inputs::HttpFile < LogStash::Inputs::Base
     @logger.info("HTTP_FILE PLUGIN LOADED url=\"#{@url}\" last_position=#{@last_position}")
   end
 
-  def run(queue)    
+  def run(queue)
+    @thread = Thread.current
     Stud.interval(@interval) do
       begin
         skip_last_line = false
@@ -84,7 +81,7 @@ class LogStash::Inputs::HttpFile < LogStash::Inputs::Base
         if (200..226).to_a.include? response.code.to_i
           messages = StringIO.new(response.body.to_s)
           messages.each_line do | message |
-            if skip_last_line && messages.eof?  
+            if skip_last_line && messages.eof?
                @last_position -= message.bytesize
                break
             end
@@ -107,5 +104,11 @@ class LogStash::Inputs::HttpFile < LogStash::Inputs::Base
         retry
       end
     end 
-  end 
+  end
+
+  def stop
+    Stud.stop!(@thread)
+    File.open(@sincedb_path, File::RDWR|File::CREAT, 0644) { | f | f.write(@last_position.to_s) }
+  end
+
 end 
